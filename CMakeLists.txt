@@ -63,3 +63,16 @@ set_target_properties(vehbutnot_ext PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/extensions"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/extensions"
 )
+
+# Build the Pattern Scanner Extension DLL
+add_library(pattern_scanner_ext SHARED 
+    extensions/pattern_scanner_ext/PatternScannerExt.cpp
+)
+target_include_directories(pattern_scanner_ext PRIVATE include)
+target_link_libraries(pattern_scanner_ext PRIVATE nlohmann_json::nlohmann_json psapi)
+set_target_properties(pattern_scanner_ext PROPERTIES
+    PREFIX ""
+    SUFFIX ".dll"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/extensions"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/extensions"
+)
