@@ -89,3 +89,16 @@ set_target_properties(freezer_ext PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/extensions"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/extensions"
 )
+
+# Build the RTTI Dumper Extension DLL
+add_library(rtti_dumper_ext SHARED 
+    extensions/rtti_dumper_ext/RttiDumperExt.cpp
+)
+target_include_directories(rtti_dumper_ext PRIVATE include)
+target_link_libraries(rtti_dumper_ext PRIVATE nlohmann_json::nlohmann_json psapi)
+set_target_properties(rtti_dumper_ext PROPERTIES
+    PREFIX ""
+    SUFFIX ".dll"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/extensions"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/extensions"
+)
