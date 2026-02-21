@@ -1,5 +1,7 @@
 # processhacker mcp
 
+<img width="1024" height="559" alt="image" src="https://github.com/user-attachments/assets/018bd9d5-ed66-43e7-b19d-f5331fb1481a" />
+
 this is dynamic mcp server for runtime analysis and process hacking. it is like processhacker but for ai agents.
 
 ## setup
