@@ -1,10 +1,12 @@
 #include "McpServer.h"
 
 #include <iostream>
-#include <windows.h>
 #include <filesystem>
+
 #include <fcntl.h>
 #include <io.h>
+
+#include <windows.h>
 
 using namespace std;
 

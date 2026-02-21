@@ -1,9 +1,9 @@
 #pragma once
 
-#include <Windows.h>
-
 #include <cstddef>
 #include <cstdint>
+
+#include <Windows.h>
 
 namespace machinetherapist {
 
