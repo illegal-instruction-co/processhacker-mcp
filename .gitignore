@@ -1,0 +1,29 @@
+# CMake/Build
+build/
+out/
+cmake-build-*/
+.cmake/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Executables and Binaries
+*.exe
+*.dll
+*.obj
+*.pdb
+*.ilk
+*.lib
+*.exp
+
+# Logs
+*.log
+
+# Windows caches
+Thumbs.db
+ehthumbs.db
+Desktop.ini

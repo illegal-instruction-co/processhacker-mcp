@@ -1,0 +1,9 @@
+BasedOnStyle: Microsoft
+BreakBeforeBraces: Stroustrup
+UseTab: Always
+ColumnLimit: 155
+PointerAlignment: Left
+AccessModifierOffset: -4
+AlwaysBreakTemplateDeclarations: Yes
+NamespaceIndentation: All
+FixNamespaceComments: No
