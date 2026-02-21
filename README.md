@@ -8,6 +8,37 @@ this is dynamic mcp server for runtime analysis and process hacking. it is like 
 3. it makes `ProcessHackerMCP.exe` and `extensions/` folder.
 4. run exe. it communicates via stdin/stdout.
 
+## editor integration
+you can configure your ai agent/editor to use this server. below are the `mcp_config.json` (or equivalent) settings. **make sure to put the absolute path to the `.exe`.**
+
+### cursor / gemini (antigravity) / claude desktop
+add this to your mcp configuration file:
+```json
+{
+  "mcpServers": {
+    "processhacker": {
+      "command": "C:\\absolute\\path\\to\\ProcessHackerMCP.exe",
+      "args": []
+    }
+  }
+}
+```
+
+### vscode (cline)
+go to cline settings -> mcp servers and add:
+```json
+{
+  "mcpServers": {
+    "processhacker": {
+      "command": "C:\\absolute\\path\\to\\ProcessHackerMCP.exe",
+      "args": []
+    }
+  }
+}
+```
+
+> **note:** some editors might freeze if the mcp server sends a huge payload (e.g. reading 1GB of memory). the core now has a 2MB payload protection limit, but try to use `limit` and `offset` arguments when querying big processes.
+
 ## how to make extension (for bypass etc)
 core is just router. all tools are in dll plugins.
 
