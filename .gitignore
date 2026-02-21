@@ -27,3 +27,6 @@ cmake-build-*/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+# Dynamic Extensions
+extensions/dynamic_exts/

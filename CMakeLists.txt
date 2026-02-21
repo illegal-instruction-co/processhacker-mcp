@@ -25,6 +25,33 @@ add_executable(ProcessHackerMCP
 target_include_directories(ProcessHackerMCP PRIVATE include)
 target_link_libraries(ProcessHackerMCP PRIVATE nlohmann_json::nlohmann_json)
 
+# Tiny C Compiler (TCC) Local Source Build
+set(TCC_SRC_DIR "${CMAKE_SOURCE_DIR}/third_party/tinycc/win32")
+set(TCC_BUILD_OUTPUT "${TCC_SRC_DIR}/tcc.exe")
+set(TCC_TARGET_DIR "${CMAKE_BINARY_DIR}/tcc")
+
+add_custom_command(
+    OUTPUT "${TCC_BUILD_OUTPUT}"
+    COMMAND cmd.exe /c "build-tcc.bat -c cl"
+    WORKING_DIRECTORY "${TCC_SRC_DIR}"
+    COMMENT "Compiling Tiny C Compiler (TCC) from source using MSVC..."
+)
+
+add_custom_target(tcc_build ALL
+    DEPENDS "${TCC_BUILD_OUTPUT}"
+)
+
+# Copy TCC artifacts (executable, libs, includes) to build dir so the router can use it dynamically
+add_custom_command(
+    TARGET tcc_build POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${TCC_TARGET_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${TCC_SRC_DIR}/tcc.exe" "${TCC_TARGET_DIR}/tcc.exe"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${TCC_SRC_DIR}/libtcc.dll" "${TCC_TARGET_DIR}/libtcc.dll"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${TCC_SRC_DIR}/include" "${TCC_TARGET_DIR}/include"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${TCC_SRC_DIR}/lib" "${TCC_TARGET_DIR}/lib"
+    COMMENT "Deploying TCC to ${TCC_TARGET_DIR}..."
+)
+
 # Build the Built-in Extension DLL
 add_library(builtin_ext SHARED 
     extensions/builtin_ext/BuiltinExt.cpp
@@ -110,6 +137,19 @@ add_library(memory_patcher_ext SHARED
 target_include_directories(memory_patcher_ext PRIVATE include)
 target_link_libraries(memory_patcher_ext PRIVATE nlohmann_json::nlohmann_json psapi)
 set_target_properties(memory_patcher_ext PROPERTIES
+    PREFIX ""
+    SUFFIX ".dll"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/extensions"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/extensions"
+)
+
+# Build the Auto Compiler Extension DLL
+add_library(auto_compiler_ext SHARED 
+    extensions/auto_compiler_ext/AutoCompilerExt.cpp
+)
+target_include_directories(auto_compiler_ext PRIVATE include)
+target_link_libraries(auto_compiler_ext PRIVATE nlohmann_json::nlohmann_json psapi)
+set_target_properties(auto_compiler_ext PROPERTIES
     PREFIX ""
     SUFFIX ".dll"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/extensions"
