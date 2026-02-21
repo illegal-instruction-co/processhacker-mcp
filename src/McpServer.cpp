@@ -8,6 +8,7 @@
 #include <format>
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 using namespace std;
 namespace fs = filesystem;
@@ -16,9 +17,9 @@ namespace machinetherapist {
 
 	McpServer::McpServer()
 	{
-		_auditLog.open("processhacker_audit.log", std::ios::app);
-		_rateLimit.windowStart = std::chrono::steady_clock::now();
-		_rateLimit.lockoutEnd = std::chrono::steady_clock::now();
+		_auditLog.open("processhacker_audit.log", ios::app);
+		_rateLimit.windowStart = chrono::steady_clock::now();
+		_rateLimit.lockoutEnd = chrono::steady_clock::now();
 	}
 
 	void McpServer::RegisterTool(const string& name, const string& description, const json& inputSchema, bool isDestructive, ToolHandler handler)
@@ -88,28 +89,27 @@ namespace machinetherapist {
 		api.registerTool = ExtensionRegisterToolCallback;
 
 		for (const auto& entry : fs::directory_iterator(directory)) {
-			if (entry.is_regular_file() && entry.path().extension() == ".dll") {
-				HMODULE hMod = LoadLibraryW(entry.path().c_str());
-				if (hMod) {
-					auto initExt = reinterpret_cast<InitMcpExtensionFn>(GetProcAddress(hMod, "InitMcpExtension"));
-					if (initExt) {
-						if (initExt(&api)) {
-							_loadedModules.push_back(hMod);
-							cerr << "[+] Loaded Stealth Extension: " << entry.path().filename().string() << "\n";
-						}
-						else {
-							cerr << "[-] Extension initialization failed: " << entry.path().filename().string() << "\n";
-							FreeLibrary(hMod);
-						}
-					}
-					else {
-						cerr << "[-] Missing InitMcpExtension export in: " << entry.path().filename().string() << "\n";
-						FreeLibrary(hMod);
-					}
-				}
-				else {
-					cerr << "[!] Failed to load DLL: " << entry.path().filename().string() << "\n";
-				}
+			if (!entry.is_regular_file() || entry.path().extension() != ".dll") {
+				continue;
+			}
+			HMODULE hMod = LoadLibraryW(entry.path().c_str());
+			if (!hMod) {
+				cerr << "[!] Failed to load DLL: " << entry.path().filename().string() << "\n";
+				continue;
+			}
+			auto initExt = reinterpret_cast<InitMcpExtensionFn>(GetProcAddress(hMod, "InitMcpExtension"));
+			if (!initExt) {
+				cerr << "[-] Missing InitMcpExtension export in: " << entry.path().filename().string() << "\n";
+				FreeLibrary(hMod);
+				continue;
+			}
+			if (initExt(&api)) {
+				_loadedModules.push_back(hMod);
+				cerr << "[+] Loaded Stealth Extension: " << entry.path().filename().string() << "\n";
+			}
+			else {
+				cerr << "[-] Extension initialization failed: " << entry.path().filename().string() << "\n";
+				FreeLibrary(hMod);
 			}
 		}
 	}
@@ -119,11 +119,9 @@ namespace machinetherapist {
 		// Parse read-only mode from command line (naive check for now, args can be passed to constructor later if needed)
 		int argc = __argc;
 		char** argv = __argv;
-		for (int i = 1; i < argc; ++i) {
-			if (string(argv[i]) == "--read-only") {
-				_readOnlyMode = true;
-				cerr << "[!] Guardrails ACTIVE: Read-only mode enabled. Destructive tools are blocked.\n";
-			}
+		if (any_of(argv + 1, argv + argc, [](const char* arg) { return string(arg) == "--read-only"; })) {
+			_readOnlyMode = true;
+			cerr << "[!] Guardrails ACTIVE: Read-only mode enabled. Destructive tools are blocked.\n";
 		}
 
 		_running = true;
@@ -183,15 +181,15 @@ namespace machinetherapist {
 
 			if (_tools.contains(name)) {
 				// 1. Loop Breaker (Rate Limiting) Check
-				auto now = std::chrono::steady_clock::now();
+				auto now = chrono::steady_clock::now();
 				if (now < _rateLimit.lockoutEnd) {
-					auto remaining = std::chrono::duration_cast<std::chrono::seconds>(_rateLimit.lockoutEnd - now).count();
+					auto remaining = chrono::duration_cast<chrono::seconds>(_rateLimit.lockoutEnd - now).count();
 					string msg = format("Guardrail Violation: AI Rate Limit active. You are making too many requests (loop breaker). Wait {} seconds. Hint: Write a C++ DLL extension for heavy operations instead of brute-forcing via JSON-RPC.", remaining);
 					SendResponse(id, {{"content", json::array({{{"type", "text"}, {"text", msg}}})}, {"isError", true}});
 					return;
 				}
 
-				if (std::chrono::duration_cast<std::chrono::seconds>(now - _rateLimit.windowStart).count() > 60) {
+				if (chrono::duration_cast<chrono::seconds>(now - _rateLimit.windowStart).count() > 60) {
 					_rateLimit.callsInWindow = 0;
 					_rateLimit.windowStart = now;
 				}
@@ -199,7 +197,7 @@ namespace machinetherapist {
 				_rateLimit.callsInWindow++;
 
 				if (_rateLimit.callsInWindow > 50) { // 50 requests per minute limit
-					_rateLimit.lockoutEnd = now + std::chrono::seconds(30); // 30s timeout
+					_rateLimit.lockoutEnd = now + chrono::seconds(30); // 30s timeout
 					string msg = "Guardrail Violation: AI Rate Limit triggered (> 50 calls/min). Brute-forcing memory is blocked to save tokens and prevent crashes. System locked for 30 seconds. Write an extension.";
 					SendResponse(id, {{"content", json::array({{{"type", "text"}, {"text", msg}}})}, {"isError", true}});
 					return;
@@ -207,12 +205,12 @@ namespace machinetherapist {
 
 				// 2. Audit Logging
 				if (_auditLog.is_open()) {
-					auto t = std::time(nullptr);
+					auto t = time(nullptr);
 					char timebuf[100];
-					if (std::strftime(timebuf, sizeof(timebuf), "%Y-%m-%d %H:%M:%S", std::localtime(&t))) {
+					if (strftime(timebuf, sizeof(timebuf), "%Y-%m-%d %H:%M:%S", localtime(&t))) {
 						_auditLog << "[" << timebuf << "] ";
 						if (_tools[name].isDestructive) _auditLog << "[WARNING: DESTRUCTIVE] ";
-						_auditLog << "Tool: " << name << " | Args: " << arguments.dump() << std::endl;
+						_auditLog << "Tool: " << name << " | Args: " << arguments.dump() << endl;
 					}
 				}
 
@@ -228,13 +226,13 @@ namespace machinetherapist {
 
 				try {
 					// Telemetry (Tracing) Start
-					auto startTime = std::chrono::high_resolution_clock::now();
+					auto startTime = chrono::high_resolution_clock::now();
 					
 					json result = _tools[name].handler(arguments);
 					
 					// Telemetry (Tracing) End
-					auto endTime = std::chrono::high_resolution_clock::now();
-					auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
+					auto endTime = chrono::high_resolution_clock::now();
+					auto durationMs = chrono::duration_cast<chrono::milliseconds>(endTime - startTime).count();
 					
 					cerr << "[Trace] Tool '" << name << "' executed in " << durationMs << "ms.\n";
 

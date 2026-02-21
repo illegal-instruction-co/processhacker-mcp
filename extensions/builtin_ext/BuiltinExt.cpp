@@ -39,7 +39,7 @@ namespace machinetherapist {
 	// Helper to convert C++ std::string responses to C-string allocated for MCP Server
 	static const char* AllocateResult(const json& result)
 	{
-		std::string response = result.dump();
+		string response = result.dump();
 		char* buf = new char[response.size() + 1];
 		strcpy_s(buf, response.size() + 1, response.c_str());
 		return buf;

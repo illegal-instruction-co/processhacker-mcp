@@ -5,6 +5,7 @@
 #include <iostream>
 
 using namespace std;
+
 using namespace machinetherapist;
 
 VehButNot* VehButNot::_instance = nullptr;

@@ -8,7 +8,9 @@
 #include <string>
 
 using namespace std;
+
 using namespace machinetherapist;
+
 using json = nlohmann::json;
 
 // Global instance to keep the engine alive

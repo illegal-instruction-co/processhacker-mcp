@@ -7,6 +7,7 @@
 #include <io.h>
 
 using namespace std;
+
 using namespace machinetherapist;
 
 int main(int argc, char* argv[])
@@ -23,8 +24,8 @@ int main(int argc, char* argv[])
 
 	WCHAR exePath[MAX_PATH];
 	GetModuleFileNameW(nullptr, exePath, MAX_PATH);
-	std::filesystem::path basePath = std::filesystem::path(exePath).parent_path();
-	std::filesystem::path extPath = basePath / "extensions";
+	filesystem::path basePath = filesystem::path(exePath).parent_path();
+	filesystem::path extPath = basePath / "extensions";
 
 	server.LoadExtensions(extPath.string());
 
