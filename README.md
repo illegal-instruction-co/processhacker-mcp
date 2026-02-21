@@ -58,6 +58,8 @@ if u want make stealth bypass (like vehbutnot or direct syscall):
 5. put your compiled `.dll` inside `extensions/` folder.
 6. exe will auto load your dll on start and ai agent will see your new tool.
 
+> **new in v1.6.0:** the ai agent can now write its own extensions dynamically! by using the `ext_auto_compiler` tool, the agent can send raw C code which the router compiles using a bundled TCC (Tiny C Compiler) and hot-loads directly into active memory. you can literally ask the ai to write its own custom bypass and it will compile itself on the fly!
+
 ## contribute
 if u write good stealth extension and think it can bypass anything or help others, please send pull request (pr). we need more plugins for stealth. 
 

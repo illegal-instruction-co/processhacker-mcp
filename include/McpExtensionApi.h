@@ -2,6 +2,7 @@
 
 // Pure C-API for ABI compatibility across different compilers
 // This allows anyone to write an extension DLL in C, C++, Rust, Zig, etc.
+#include <stdbool.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
