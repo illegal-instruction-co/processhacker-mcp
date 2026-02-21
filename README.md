@@ -61,6 +61,17 @@ if u want make stealth bypass (like vehbutnot or direct syscall):
 ## contribute
 if u write good stealth extension and think it can bypass anything or help others, please send pull request (pr). we need more plugins for stealth. 
 
+## just wondering... (faq)
+i was thinking about this architecture and had a weird thought:
+
+**could someone actually use this to create autonomous malware or game cheats just by writing prompts?**
+like asking the ai: "inject here, find the decryption routine, and dump the keys as json". since the actual "malware behavior" isn't in the compiled c++ code but in the prompt text, no classic anti-virus could catch the payload statically. 
+
+and if an anti-cheat updates, the ai could just read the new memory layout and adapt its logic instantly without needing a recompile.
+
+is this genuinely possible now or just a weird architectural nightmare? lol 
+if u have thoughts on this, hit me up or open an issue.
+
 ## disclaimer
 
 **educational and research purposes only.** published to document the technique, not to hand it out as a toolkit.
