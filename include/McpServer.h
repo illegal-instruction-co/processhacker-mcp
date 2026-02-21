@@ -1,5 +1,7 @@
 #pragma once
 
+#include <chrono>
+#include <fstream>
 #include <functional>
 #include <nlohmann/json.hpp>
 #include <string>
@@ -41,6 +43,14 @@ namespace machinetherapist {
 		std::vector<void*> _loadedModules; // HMODULEs
 		bool _running = false;
 		bool _readOnlyMode = false; // Guardrail flag
+
+		struct RateLimitState {
+			int callsInWindow = 0;
+			std::chrono::steady_clock::time_point windowStart;
+			std::chrono::steady_clock::time_point lockoutEnd;
+		};
+		RateLimitState _rateLimit;
+		std::ofstream _auditLog;
 	};
 
 } // namespace machinetherapist

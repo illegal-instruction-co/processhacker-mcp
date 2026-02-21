@@ -264,8 +264,15 @@ namespace machinetherapist {
 			return FormatToolResult(oss.str());
 		}
 
+		DWORD error = GetLastError();
 		CloseHandle(hProc);
-		return FormatToolResult(format("ReadProcessMemory failed, error: {}", GetLastError()));
+
+		string errorMsg = format("ReadProcessMemory failed, error: {}", error);
+		if (error == ERROR_PARTIAL_COPY || error == ERROR_NOACCESS || error == ERROR_INVALID_ADDRESS) {
+			errorMsg += ". LOUD FAILURE HINT: The address is unmapped or protected. Stop brute-forcing! Use 'ph_query_memory_regions' first to find valid, committed memory ranges.";
+		}
+		
+		return FormatToolResult(errorMsg);
 	}
 
 	json BuiltinExt::ListThreads(const json& args)

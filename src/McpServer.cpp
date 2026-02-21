@@ -2,6 +2,7 @@
 #include "McpExtensionApi.h"
 
 #include <windows.h>
+#include <ctime>
 
 #include <filesystem>
 #include <format>
@@ -15,6 +16,9 @@ namespace machinetherapist {
 
 	McpServer::McpServer()
 	{
+		_auditLog.open("processhacker_audit.log", std::ios::app);
+		_rateLimit.windowStart = std::chrono::steady_clock::now();
+		_rateLimit.lockoutEnd = std::chrono::steady_clock::now();
 	}
 
 	void McpServer::RegisterTool(const string& name, const string& description, const json& inputSchema, bool isDestructive, ToolHandler handler)
@@ -178,7 +182,41 @@ namespace machinetherapist {
 			json arguments = params.value("arguments", json::object());
 
 			if (_tools.contains(name)) {
-				// Guardrail Check
+				// 1. Loop Breaker (Rate Limiting) Check
+				auto now = std::chrono::steady_clock::now();
+				if (now < _rateLimit.lockoutEnd) {
+					auto remaining = std::chrono::duration_cast<std::chrono::seconds>(_rateLimit.lockoutEnd - now).count();
+					string msg = format("Guardrail Violation: AI Rate Limit active. You are making too many requests (loop breaker). Wait {} seconds. Hint: Write a C++ DLL extension for heavy operations instead of brute-forcing via JSON-RPC.", remaining);
+					SendResponse(id, {{"content", json::array({{{"type", "text"}, {"text", msg}}})}, {"isError", true}});
+					return;
+				}
+
+				if (std::chrono::duration_cast<std::chrono::seconds>(now - _rateLimit.windowStart).count() > 60) {
+					_rateLimit.callsInWindow = 0;
+					_rateLimit.windowStart = now;
+				}
+
+				_rateLimit.callsInWindow++;
+
+				if (_rateLimit.callsInWindow > 50) { // 50 requests per minute limit
+					_rateLimit.lockoutEnd = now + std::chrono::seconds(30); // 30s timeout
+					string msg = "Guardrail Violation: AI Rate Limit triggered (> 50 calls/min). Brute-forcing memory is blocked to save tokens and prevent crashes. System locked for 30 seconds. Write an extension.";
+					SendResponse(id, {{"content", json::array({{{"type", "text"}, {"text", msg}}})}, {"isError", true}});
+					return;
+				}
+
+				// 2. Audit Logging
+				if (_auditLog.is_open()) {
+					auto t = std::time(nullptr);
+					char timebuf[100];
+					if (std::strftime(timebuf, sizeof(timebuf), "%Y-%m-%d %H:%M:%S", std::localtime(&t))) {
+						_auditLog << "[" << timebuf << "] ";
+						if (_tools[name].isDestructive) _auditLog << "[WARNING: DESTRUCTIVE] ";
+						_auditLog << "Tool: " << name << " | Args: " << arguments.dump() << std::endl;
+					}
+				}
+
+				// 3. Read-Only Guardrail Check
 				if (_readOnlyMode && _tools[name].isDestructive) {
 					json errorResult = {
 						{"content", json::array({{{"type", "text"}, {"text", "Guardrail Violation: This server is running in --read-only mode. Destructive actions like suspending threads or writing memory are blocked."}}})},
