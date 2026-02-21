@@ -1,0 +1,62 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build and Release
+    runs-on: windows-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: 'latest'
+
+      - name: Configure CMake
+        run: cmake -B build -S .
+
+      - name: Build Project
+        run: cmake --build build --config Release
+
+      - name: Prepare Artifacts
+        run: |
+          mkdir release_artifacts
+          mkdir release_artifacts\extensions
+          
+          # Copy the core executable
+          copy build\Release\ProcessHackerMCP.exe release_artifacts\
+          
+          # Copy any built extensions
+          if exist build\Release\extensions\*.dll (
+              copy build\Release\extensions\*.dll release_artifacts\extensions\
+          )
+          if exist build\extensions\Release\*.dll (
+              copy build\extensions\Release\*.dll release_artifacts\extensions\
+          )
+          
+          # Copy important documentation/scripts
+          copy README.md release_artifacts\
+          copy wrapper.bat release_artifacts\
+          copy LICENSE release_artifacts\
+
+      - name: Create ZIP archive
+        run: |
+          Compress-Archive -Path release_artifacts\* -DestinationPath ProcessHackerMCP-Windows.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ProcessHackerMCP-Windows.zip
+          generate_release_notes: true
+          draft: false
+          prerelease: false
