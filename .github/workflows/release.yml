@@ -37,12 +37,12 @@ jobs:
           copy build\Release\ProcessHackerMCP.exe release_artifacts\
           
           # Copy any built extensions
-          if exist build\Release\extensions\*.dll (
+          if (Test-Path build\Release\extensions\*.dll) {
               copy build\Release\extensions\*.dll release_artifacts\extensions\
-          )
-          if exist build\extensions\Release\*.dll (
+          }
+          if (Test-Path build\extensions\Release\*.dll) {
               copy build\extensions\Release\*.dll release_artifacts\extensions\
-          )
+          }
           
           # Copy important documentation/scripts
           copy README.md release_artifacts\
