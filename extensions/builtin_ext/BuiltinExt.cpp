@@ -89,7 +89,7 @@ namespace machinetherapist {
 			"ph_list_processes", "Lists all running processes on the system.", "1.0.0",
 			R"({"type": "object", "properties": {"offset": {"type": "integer"}, "limit": {"type": "integer"}}})",
 			WrapListProcesses,
-			BuiltinFreeResult};
+			BuiltinFreeResult, false};
 		api->registerTool(api->serverContext, &t_proc);
 
 		McpToolRegistration t_mod = {
@@ -98,7 +98,7 @@ namespace machinetherapist {
 			"1.0.0",
 			R"({"type": "object", "properties": {"pid": {"type": "integer", "description": "The Process ID to inspect"}, "offset": {"type": "integer"}, "limit": {"type": "integer"}}, "required": ["pid"]})",
 			WrapListModules,
-			BuiltinFreeResult};
+			BuiltinFreeResult, false};
 		api->registerTool(api->serverContext, &t_mod);
 
 		McpToolRegistration t_mem = {
@@ -107,12 +107,12 @@ namespace machinetherapist {
 			"1.0.0",
 			R"({"type": "object", "properties": {"pid": {"type": "integer"}, "address": {"type": "string"}, "size": {"type": "integer"}}, "required": ["pid", "address", "size"]})",
 			WrapReadMemory,
-			BuiltinFreeResult};
+			BuiltinFreeResult, false};
 		api->registerTool(api->serverContext, &t_mem);
 
 		McpToolRegistration t_threads = {"ph_list_threads", "Lists all threads for a specific process ID.",
 										 "1.0.0",			R"({"type": "object", "properties": {"pid": {"type": "integer"}}, "required": ["pid"]})",
-										 WrapListThreads,	BuiltinFreeResult};
+										 WrapListThreads,	BuiltinFreeResult, false};
 		api->registerTool(api->serverContext, &t_threads);
 
 		McpToolRegistration t_suspend = {
@@ -121,7 +121,7 @@ namespace machinetherapist {
 			"1.0.0",
 			R"({"type": "object", "properties": {"tid": {"type": "integer"}, "action": {"type": "string"}}, "required": ["tid", "action"]})",
 			WrapSuspendResumeThread,
-			BuiltinFreeResult};
+			BuiltinFreeResult, true}; // Mutes state, mark as destructive
 		api->registerTool(api->serverContext, &t_suspend);
 
 		McpToolRegistration t_regions = {"ph_query_memory_regions",
@@ -129,12 +129,12 @@ namespace machinetherapist {
 										 "1.0.0",
 										 R"({"type": "object", "properties": {"pid": {"type": "integer"}, "offset": {"type": "integer"}, "limit": {"type": "integer"}}, "required": ["pid"]})",
 										 WrapQueryMemoryRegions,
-										 BuiltinFreeResult};
+										 BuiltinFreeResult, false};
 		api->registerTool(api->serverContext, &t_regions);
 
 		McpToolRegistration t_handles = {"ph_list_handles", "Lists all handles opened by a specific process ID.",
 										 "1.0.0",			R"({"type": "object", "properties": {"pid": {"type": "integer"}, "offset": {"type": "integer"}, "limit": {"type": "integer"}}, "required": ["pid"]})",
-										 WrapListHandles,	BuiltinFreeResult};
+										 WrapListHandles,	BuiltinFreeResult, false};
 		api->registerTool(api->serverContext, &t_handles);
 
 		return true;

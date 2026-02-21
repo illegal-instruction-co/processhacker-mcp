@@ -118,7 +118,7 @@ extern "C" __declspec(dllexport) bool InitMcpExtension(const McpServerApi* api)
 		"1.0.0",
 		R"({"type": "object", "properties": {"library": {"type": "string", "default": "ntdll.dll"}, "function": {"type": "string", "default": "NtReadVirtualMemory"}}, "required": ["library", "function"]})",
 		VehInstallHookHandler,
-		VehFreeResult};
+		VehFreeResult, true}; // Mutes system flow
 	api->registerTool(api->serverContext, &t_install);
 
 	// 2. Status Tool
@@ -127,7 +127,7 @@ extern "C" __declspec(dllexport) bool InitMcpExtension(const McpServerApi* api)
 									"1.0.0",
 									R"({"type": "object", "properties": {}})",
 									VehStatusHandler,
-									VehFreeResult};
+									VehFreeResult, false};
 	api->registerTool(api->serverContext, &t_status);
 
 	// 3. Shutdown Tool
@@ -136,7 +136,7 @@ extern "C" __declspec(dllexport) bool InitMcpExtension(const McpServerApi* api)
 									  "1.0.0",
 									  R"({"type": "object", "properties": {}})",
 									  VehShutdownHandler,
-									  VehFreeResult};
+									  VehFreeResult, false};
 	api->registerTool(api->serverContext, &t_shutdown);
 
 	return true;

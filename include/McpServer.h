@@ -20,7 +20,7 @@ namespace machinetherapist {
 		void Start();
 		void Stop();
 
-		void RegisterTool(const std::string& name, const std::string& description, const json& inputSchema, ToolHandler handler);
+		void RegisterTool(const std::string& name, const std::string& description, const json& inputSchema, bool isDestructive, ToolHandler handler);
 		void LoadExtensions(const std::string& directory);
 
 	private:
@@ -33,12 +33,14 @@ namespace machinetherapist {
 			std::string name;
 			std::string description;
 			json inputSchema;
+			bool isDestructive;
 			ToolHandler handler;
 		};
 
 		std::unordered_map<std::string, ToolInfo> _tools;
 		std::vector<void*> _loadedModules; // HMODULEs
 		bool _running = false;
+		bool _readOnlyMode = false; // Guardrail flag
 	};
 
 } // namespace machinetherapist

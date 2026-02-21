@@ -17,9 +17,9 @@ namespace machinetherapist {
 	{
 	}
 
-	void McpServer::RegisterTool(const string& name, const string& description, const json& inputSchema, ToolHandler handler)
+	void McpServer::RegisterTool(const string& name, const string& description, const json& inputSchema, bool isDestructive, ToolHandler handler)
 	{
-		_tools[name] = {name, description, inputSchema, move(handler)};
+		_tools[name] = {name, description, inputSchema, isDestructive, move(handler)};
 	}
 
 	static void ExtensionRegisterToolCallback(void* serverContext, const McpToolRegistration* extTool)
@@ -43,8 +43,9 @@ namespace machinetherapist {
 
 		auto handlerFn = extTool->handler;
 		auto freeFn = extTool->freeResult;
+		bool isDestructive = extTool->isDestructive;
 
-		server->RegisterTool(name, fullDesc, schema, [handlerFn, freeFn](const json& args) -> json {
+		server->RegisterTool(name, fullDesc, schema, isDestructive, [handlerFn, freeFn](const json& args) -> json {
 			if (!handlerFn) {
 				return {{"content", json::array({{{"type", "text"}, {"text", "Missing handler"}}})}};
 			}
@@ -111,6 +112,16 @@ namespace machinetherapist {
 
 	void McpServer::Start()
 	{
+		// Parse read-only mode from command line (naive check for now, args can be passed to constructor later if needed)
+		int argc = __argc;
+		char** argv = __argv;
+		for (int i = 1; i < argc; ++i) {
+			if (string(argv[i]) == "--read-only") {
+				_readOnlyMode = true;
+				cerr << "[!] Guardrails ACTIVE: Read-only mode enabled. Destructive tools are blocked.\n";
+			}
+		}
+
 		_running = true;
 		string line;
 
@@ -167,8 +178,28 @@ namespace machinetherapist {
 			json arguments = params.value("arguments", json::object());
 
 			if (_tools.contains(name)) {
+				// Guardrail Check
+				if (_readOnlyMode && _tools[name].isDestructive) {
+					json errorResult = {
+						{"content", json::array({{{"type", "text"}, {"text", "Guardrail Violation: This server is running in --read-only mode. Destructive actions like suspending threads or writing memory are blocked."}}})},
+						{"isError", true}};
+					cerr << "[-] Blocked destructive tool call: " << name << " (Read-only mode)\n";
+					SendResponse(id, errorResult);
+					return;
+				}
+
 				try {
+					// Telemetry (Tracing) Start
+					auto startTime = std::chrono::high_resolution_clock::now();
+					
 					json result = _tools[name].handler(arguments);
+					
+					// Telemetry (Tracing) End
+					auto endTime = std::chrono::high_resolution_clock::now();
+					auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
+					
+					cerr << "[Trace] Tool '" << name << "' executed in " << durationMs << "ms.\n";
+
 					SendResponse(id, result);
 				}
 				catch (const exception& e) {

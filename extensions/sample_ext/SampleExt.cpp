@@ -48,6 +48,7 @@ extern "C" __declspec(dllexport) bool InitMcpExtension(const McpServerApi* api)
     })";
 	tool.handler = SampleMemoryToolHandler;
 	tool.freeResult = SampleFreeResult;
+	tool.isDestructive = false;
 
 	api->registerTool(api->serverContext, &tool);
 

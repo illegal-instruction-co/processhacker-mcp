@@ -21,6 +21,7 @@ struct McpToolRegistration {
 	const char* inputSchemaJson;
 	ExtToolHandlerFn handler;
 	ExtFreeResultFn freeResult;
+	bool isDestructive; // Guardrail: does this tool mutate/harm system state?
 };
 
 // Callback provided to the DLL by the MCP Server
