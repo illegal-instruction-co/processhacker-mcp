@@ -39,15 +39,24 @@ go to cline settings -> mcp servers and add:
 
 > **note:** some editors might freeze if the mcp server sends a huge payload (e.g. reading 1GB of memory). the core now has a 2MB payload protection limit, but try to use `limit` and `offset` arguments when querying big processes.
 
+## agent guardrails & telemetry (new in v1.1.0)
+we added some enterprise-grade agent logic to stop rogue bots from nuking your host machine.
+
+- **Read-Only Mode:** change `"args": []` to `"args": ["--read-only"]` in your mcp config. if the ai tries to write memory or suspend threads (destructive actions), the core blocks it.
+- **Audit Log:** all tool calls (and their args) are saved to `processhacker_audit.log`. destructive actions are tagged with `[WARNING: DESTRUCTIVE]`.
+- **Loop Breaker (Rate Limit):** if an ai agent panics and calls 50 tools in 1 minute (brute-forcing memory), the core locks it out for 30 seconds. write a c++ extension for heavy scanning, don't spam rpc.
+- **Loud Failures:** if reading unmapped memory fails, the ai gets a clear hint to use `ph_query_memory_regions` instead of just a generic error.
+
 ## how to make extension (for bypass etc)
 core is just router. all tools are in dll plugins.
 
 if u want make stealth bypass (like vehbutnot or direct syscall):
 1. copy `extensions/sample_ext` folder.
 2. write your code in c or c++.
-3. u must export `InitMcpExtension`.
-4. put your compiled `.dll` inside `extensions/` folder.
-5. exe will auto load your dll on start and ai agent will see your new tool.
+3. setup `McpToolRegistration` and set `isDestructive = true` if your tool mutates state (writes memory, sets hooks).
+4. u must export `InitMcpExtension`.
+5. put your compiled `.dll` inside `extensions/` folder.
+6. exe will auto load your dll on start and ai agent will see your new tool.
 
 ## contribute
 if u write good stealth extension and think it can bypass anything or help others, please send pull request (pr). we need more plugins for stealth. 
