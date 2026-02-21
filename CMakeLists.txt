@@ -76,3 +76,16 @@ set_target_properties(pattern_scanner_ext PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/extensions"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/extensions"
 )
+
+# Build the Freezer Extension DLL
+add_library(freezer_ext SHARED 
+    extensions/freezer_ext/FreezerExt.cpp
+)
+target_include_directories(freezer_ext PRIVATE include)
+target_link_libraries(freezer_ext PRIVATE nlohmann_json::nlohmann_json)
+set_target_properties(freezer_ext PROPERTIES
+    PREFIX ""
+    SUFFIX ".dll"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/extensions"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/extensions"
+)
