@@ -102,3 +102,16 @@ set_target_properties(rtti_dumper_ext PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/extensions"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/extensions"
 )
+
+# Build the Memory Patcher Extension DLL
+add_library(memory_patcher_ext SHARED 
+    extensions/memory_patcher_ext/MemoryPatcherExt.cpp
+)
+target_include_directories(memory_patcher_ext PRIVATE include)
+target_link_libraries(memory_patcher_ext PRIVATE nlohmann_json::nlohmann_json psapi)
+set_target_properties(memory_patcher_ext PROPERTIES
+    PREFIX ""
+    SUFFIX ".dll"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/extensions"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/extensions"
+)
